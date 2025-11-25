@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 프로젝트 설명
 
-## Getting Started
+한 줄 명언과 저자의 스피치를 함께 보여주는 작은 웹 서비스입니다.  
+랜딩에서는 명언 카드가 보이고, 화면 오른쪽 아래에는 항상 열려 있는 미니 챗봇이 있어 사용자 입력으로 상황별 명언을 받아볼 수 있습니다.
+- **왜 명언과 스피치인가요?**
+- 평소 명언과 연설 영상을 자주 소비하면서, “지금 내 상황에 딱 맞는 한 줄과 짧은 클립만 빠르게 보고 싶다”는 니즈를 느꼈습니다.
+- 개발자이자 실제 사용자 입장에서 이 사용 경험을 정리해, 숏폼 플랫폼 환경에서 어떤 정보 구조와 인터랙션이 필요한지 직접 실험해 보기 위해 이 주제를 선택했습니다.
 
-First, run the development server:
+## 기술 스택
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Framework: Next.js 15
+- Language: TypeScript 
+- Styling: Tailwind CSS
+- Deploy: Vercel
+- Etc: YouTube 임베드, 커스텀 훅, 클라이언트 상태 관리
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 주요 기능
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- 랜덤 명언/영상 카드 표시
+- 카테고리, 출처, 영상 썸네일과 함께 카드 형태로 표시
+- YouTube 썸네일 클릭 시 동영상 플레이어로 전환
+- 페이지 우측 하단 고정 챗봇 위젯 (간단한 프롬프트 → Google Gemini API 호출)
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 학습 및 구현 과정에서 겪은 어려움
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **UI 라이브러리 선택과 철회**
+  - 랜덤 버튼 구현을 주사위를 굴리는 애니메이션 시각효과 + 사운드를 넣고자 shadcn, Radix UI 등을 도입하려다 버튼하나에 코드가 장황해지고 복잡해져,
+  - 결국 핵심 페이지는 기본 `<button>`, Tailwind 조합으로 다시 단순화.
+  - “필요 이상으로 라이브러리를 쓰지 않는다”라는 기준을 몸으로 익힌 과정.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **외부 LLM API선택과 에러 디버깅**
+ - 초기에 OpenAI API를 사용해 챗봇을 구현해 보았지만, 요금제/과금 구조와 사용 제한 때문에
+    장기적으로 쓰기 어렵다고 판단해 무료 크레딧을 제공하는 Google Gemini API로 방향을 정했습니다.
+  - Gemini API를 처음 연동했을 때도 403(Forbidden) 에러가 발생해,
+    요청 헤더, 엔드포인트 URL, 사용자 권한 설정을 로그를 찍고 클라우드 콘솔을 확인하며 하나씩 확인했습니다.
+  - 이 과정에서 잘못된 엔드포인트와 권한 설정을 바로잡으면서 403 에러를 해결했고,
+    현재는 Next.js Route Handler(`/api/chat`)에서 서버 측에서만 Gemini API를 호출하도록 구성했습니다.
+  - 덕분에 외부 LLM API를 연동할 때
+    - 요금제/크레딧 정책을 먼저 검토하는 것과
+    - 403 등 권한 관련 에러를 로그 기반으로 단계적으로 디버깅하는 방법을 경험했습니다.
 
-## Deploy on Vercel
+- **컴포넌트/상태 분리 필요성**
+-랜덤 버튼, 명언 카드, 챗봇을 한 컴포넌트에 몰아 넣었다가 state와 props가 뒤섞여 디버깅이 어려워지는 경험을 했습니다.
+ 이후 명언 데이터, 챗봇 메시지 상태를 한 곳에 몰아두지 않고 각 컴포넌트가 맡아야 할 상태만 들고 있게 나누면서 구조를 다시 생각했습니다.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- 반응형 UI 이슈. 데스크톱 기준으로 먼저 만들었다가 모바일 화면에서 버튼/카드/챗봇이 너무 작게 보이거나 겹치는 문제가 있었습니다.
+ Tailwind의 css 조합을 여러 번 수정하면서 데스크탑 /모바일 겸용으로 레이아웃을 생각하는 습관을 들이고 있습니다.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## v2 계획 (확장 아이디어)
+
+프로젝트는 현재 랜덤 명언/영상 카드 위주의 v1 상태이며, 아래와 같은 방향으로 확장을 고민하고 있습니다.
+
+- **카테고리/태그 기반 탐색**
+  - 감정 상태(위로, 동기부여)로 카테고리를 나누어 사용자가 기분에 맞는 명언을 빠르게 찾을 수 있도록 필터 UI를 추가할 예정입니다.
+
+- **스크롤/스와이프 기반 숏폼 뷰어**
+  - 유튜브 숏츠, 인스타 릴스처럼 세로 스크롤 또는 스와이프로 다음 카드가 자연스럽게 넘어가는
+    숏폼 스타일 뷰어를 v2에서 구현할 계획입니다.
+  - 스크롤하면 다음 카드가 자연스럽게 보이도록 만들고,
+  화면에 들어오기 전에 미리 불러와서 필요하면 영상도 자동으로 재생·정지되게 하는 방식을 v2에서 공부하고 적용해 볼 예정입니다.
+
+- **사용자 행동 가이드(툴팁/애니메이션)**
+  - 첫 방문 시에만 “아래로 스크롤해서 다음 카드를 확인해 보세요”, “스와이프하여 다음 영상보기”와 같은
+    툴팁이나 가이드 애니메이션을 보여주어, 현대적인 숏폼 서비스처럼 사용자 행동을 자연스럽게 안내하는 기능을 추가할 계획입니다.
+
+- **재생 시 스크립트 생성**
+  - 동영상 재생 시 자막 스크립트를 빈 공간 또는 모달로 띄워주는 방식을 고려중입니다. 유튜브 영상에 CC가 있어 불필요하다고 생각되어 현재는 도입하지 않았습니다.
